@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tvoje reflexe</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    text-align: center;
+    background: linear-gradient(#0f2027,#203a43,#2c5364);
+    color: white;
+}
+
+h1 {
+    margin-top: 20px;
+    font-size: 38px;
+}
+
+#startLine {
+    height: 20px;
+    background: repeating-linear-gradient(45deg, white, white 10px, black 10px, black 20px);
+}
+
+#road {
+    background:#333;
+    padding:20px 0;
+}
+
+.car {
+    font-size:40px;
+}
+
+#semafor {
+    width:120px;
+    background:black;
+    padding:20px;
+    border-radius:20px;
+    margin:20px auto;
+}
+
+.light {
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    margin:10px auto;
+    background:#222;
+}
+
+button {
+    padding:12px 25px;
+    font-size:18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:red;
+    color:white;
+}
+
+select {
+    padding:8px;
+    margin:10px;
+}
+
+#gameArea {
+    height:50vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    font-size:28px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏎️ Tvoje reflexe</h1>
+
+<div id="startScreen">
+<div id="startLine"></div>
+<div id="road">
+<div class="car">🏎️</div>
+</div>
+
+<div id="semafor">
+<div class="light" id="redLight"></div>
+<div class="light" id="yellowLight"></div>
+<div class="light" id="greenLight"></div>
+</div>
+
+<p>Vyber obtížnost:</p>
+<select id="difficulty">
+<option value="450">Lehká</option>
+<option value="300" selected>Střední</option>
+<option value="200">Těžká</option>
+</select>
+
+<br>
+<button onclick="startGame()">START ZÁVODU</button>
+</div>
+
+<div id="gameScreen" style="display:none;">
+<p>Kolo: <span id="round">1</span>/5</p>
+<div id="gameArea">
+<div id="status">Čekej...</div>
+<div id="timer"></div>
+</div>
+</div>
+
+<div id="endScreen" style="display:none;">
+<h2 id="result"></h2>
+<button onclick="restartGame()">Nový závod</button>
+</div>
+
+<script>
+let round = 1;
+let totalTime = 0;
+let startTime;
+let timeout;
+let timerInterval;
+let canClick = false;
+let difficultyLimit = 300;
+
+function playBeep(){
+let audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+audio.play();
+}
+
+function startGame(){
+round=1;
+totalTime=0;
+difficultyLimit=parseInt(document.getElementById("difficulty").value);
+
+document.getElementById("startScreen").style.display="none";
+document.getElementById("gameScreen").style.display="block";
+nextRound();
+}
+
+function nextRound(){
+document.getElementById("round").textContent=round;
+resetLights();
+document.getElementById("redLight").style.background="red";
+
+document.getElementById("status").textContent="ČEKÁNÍ NA START...";
+document.getElementById("timer").textContent="";
+canClick=false;
+
+let delay=Math.random()*3000+2000;
+
+timeout=setTimeout(()=>{
+resetLights();
+document.getElementById("greenLight").style.background="lime";
+document.getElementById("status").textContent="START!";
+startTime=Date.now();
+canClick=true;
+playBeep();
+
+timerInterval=setInterval(()=>{
+let current=Date.now()-startTime;
+document.getElementById("timer").textContent="Čas: "+current+" ms";
+},10);
+
+},delay);
+}
+
+document.getElementById("gameArea").onclick=function(){
+if(!canClick){
+clearTimeout(timeout);
+endGame("❌ Předčasný start – diskvalifikace!");
+return;
+}
+
+clearInterval(timerInterval);
+let reaction=Date.now()-startTime;
+totalTime+=reaction;
+round++;
+
+if(round>5){
+let average=Math.round(totalTime/5);
+if(average<difficultyLimit){
+endGame("🏆 Výhra! Průměr: "+average+" ms");
+}else{
+endGame("❌ Prohra. Průměr: "+average+" ms");
+}
+}else{
+nextRound();
+}
+}
+
+function endGame(text){
+document.getElementById("gameScreen").style.display="none";
+document.getElementById("endScreen").style.display="block";
+document.getElementById("result").textContent=text;
+}
+
+function restartGame(){
+document.getElementById("endScreen").style.display="none";
+document.getElementById("startScreen").style.display="block";
+}
+
+function resetLights(){
+document.getElementById("redLight").style.background="#222";
+document.getElementById("yellowLight").style.background="#222";
+document.getElementById("greenLight").style.background="#222";
+}
+</script>
+
+</body>
+</html>
